@@ -4,25 +4,27 @@
 // ---------- lista de alumnos ----------
 async function vistaAlumnos(main) {
   const lista = await api('GET', '/api/alumnos');
-  const buscar = h('input', { placeholder: 'Buscar por nombre o CI…', style: 'max-width:300px' });
+  const buscar = h('input', { type: 'search', class: 'buscador', placeholder: 'Buscar por nombre o CI…' });
   const cont = h('div', { class: 'lista' });
   const pintar = () => {
     const q = sinTildes(buscar.value);
     const f = lista.filter((a) => sinTildes(a.nombre).includes(q) || a.ci.includes(q));
     cont.replaceChildren(...(f.length ? f.map((a) => {
       const prox = (a.ficha.comercial || {}).proximo_pago, vencido = prox && prox < hoyISO();
-      return h('div', { class: 'card item-click fila entre', onclick: () => { S.sub = a.id; S.subtab = 'resumen'; render(); } },
-        h('div', {}, h('h3', {}, a.nombre), h('div', { class: 'sub' }, [`CI ${a.ci}`, a.objetivo, a.nivel].filter(Boolean).join(' · '))),
-        h('div', { class: 'fila' },
-          !a.activo ? chip('Inactivo', 'off') : null,
-          vencido ? chip('Pago vencido ' + fechaNum(prox), 'warn') : a.ultimo_pago === 'Pendiente' ? chip('Pago pendiente', 'warn') : null,
-          a.pendientes ? chip(`${a.pendientes} sesiones próximas`, 'acc') : chip('Sin rutina próxima'),
-          chip(`${a.hechas} hechas`, 'ok')));
+      return h('div', { class: 'card item-click tarjeta-alumno', onclick: () => { S.sub = a.id; S.subtab = 'resumen'; render(); } },
+        h('div', { class: 'avatar' + (a.activo ? '' : ' apagado') }, iniciales(a.nombre)),
+        h('div', { class: 'tarjeta-txt' }, h('h3', {}, a.nombre), h('div', { class: 'sub' }, [`CI ${a.ci}`, a.objetivo].filter(Boolean).join(' · ')),
+          h('div', { class: 'chips-fila' },
+            !a.activo ? chip('Inactivo', 'off') : null,
+            vencido ? chip('Pago vencido', 'warn') : a.ultimo_pago === 'Pendiente' ? chip('Pago pendiente', 'warn') : null,
+            a.pendientes ? chip(`${a.pendientes} próximas`, 'acc') : chip('Sin rutina'),
+            chip(`${a.hechas} hechas`, 'ok'))),
+        h('span', { class: 'flecha', 'aria-hidden': 'true' }, '›'));
     }) : [h('div', { class: 'vacio' }, lista.length ? 'Sin resultados' : 'Todavía no cargaste alumnos. Tocá "Nuevo alumno".')]));
   };
   buscar.oninput = pintar;
   main.append(h('div', { class: 'cab' }, h('div', {}, h('h1', {}, 'Alumnos'), h('div', { class: 'sub' }, `${lista.filter((a) => a.activo).length} activos de ${lista.length}`)),
-    h('div', { class: 'fila' }, buscar, h('button', { class: 'btn prim', onclick: nuevoAlumno }, '+ Nuevo alumno'))), cont);
+    h('button', { class: 'btn prim', onclick: nuevoAlumno }, '+ Nuevo alumno')), buscar, cont);
   pintar();
 }
 function nuevoAlumno() {
@@ -45,10 +47,11 @@ function nuevoAlumno() {
 const SUBTABS = [['resumen', 'Resumen'], ['entreno', 'Entrenamiento'], ['alimentacion', 'Alimentación'], ['progreso', 'Progreso'], ['ficha', 'Ficha'], ['pagos', 'Pagos']];
 async function vistaAlumno(main) {
   const a = await api('GET', '/api/alumnos/' + S.sub);
-  const cuerpo = h('div');
+  const cuerpo = contenedor();
   main.append(
-    h('button', { class: 'btn chico', onclick: () => { S.sub = null; render(); }, style: 'margin-bottom:12px' }, '← Alumnos'),
-    h('div', { class: 'cab' },
+    h('button', { class: 'btn chico btn-atras', onclick: () => { S.sub = null; render(); } }, icono('atras', 18), 'Alumnos'),
+    h('div', { class: 'perfil-cab' },
+      h('div', { class: 'avatar' }, iniciales(a.nombre)),
       h('div', {}, h('h1', {}, a.nombre, !a.activo ? ' ' : null, !a.activo ? chip('Inactivo', 'off') : null),
         h('div', { class: 'sub' }, [`CI ${a.ci}`, a.objetivo, a.nivel, a.edad && a.edad + ' años', a.telefono].filter(Boolean).join(' · ')))),
     h('nav', { class: 'subtabs' }, SUBTABS.map(([id, t]) => h('button', { class: 'subtab' + (S.subtab === id ? ' on' : ''), onclick: () => { S.subtab = id; render(); } }, t))),
@@ -66,7 +69,7 @@ async function tabResumen(c, a) {
 async function tabEntreno(c, a) {
   S.semana ||= lunesDe(hoyISO());
   const cont = h('div');
-  c.append(h('div', { class: 'fila', style: 'justify-content:flex-end;margin-bottom:12px' },
+  c.append(h('div', { class: 'fila acciones-top', style: 'justify-content:flex-end;margin-bottom:12px' },
     h('button', { class: 'btn', onclick: intentar(async () => { const d = await cargarDatos(a.id); dialogoImprimir(a, d); }) }, '🖨 Imprimir / PDF'),
     h('button', { class: 'btn prim', onclick: () => asignarPlan([a.id], S.semana) }, 'Asignar plan semanal')), cont);
   const pintar = intentar(async () => {
@@ -211,7 +214,7 @@ async function selectorEjercicios(items, alCambiar, enfoque) {
 async function tabAlimentacion(c, a) {
   const [dieta, al, med] = await Promise.all([api('GET', '/api/dieta?alumno=' + a.id), alimentos(), api('GET', '/api/mediciones?alumno=' + a.id)]);
   const cont = h('div');
-  c.append(h('div', { class: 'fila', style: 'justify-content:flex-end;margin-bottom:12px' },
+  c.append(h('div', { class: 'fila acciones-top', style: 'justify-content:flex-end;margin-bottom:12px' },
     h('button', { class: 'btn', onclick: intentar(async () => imprimirDieta(a, await api('GET', '/api/dieta?alumno=' + a.id), al, med)) }, '🖨 Imprimir / PDF')), cont);
   vistaDieta(cont, a, dieta, al, med, {
     editable: true,
@@ -560,7 +563,7 @@ function vistaAjustes(main) {
         h('div', { class: 'grid2' }, campo('Nombre de la empresa', inp('empresa')), campo('Entrenador', inp('entrenador', 'Ej: Carlos Fabián Areco')),
           campo('Contacto', inp('contacto', 'Teléfono o email')), campo('Instagram', inp('instagram', '@usuario'))),
         h('div', { class: 'fila' },
-          h('button', { class: 'btn prim', onclick: intentar(async () => { await api('PUT', '/api/config', c); toast('Marca guardada'); render(); }) }, 'Guardar'),
+          h('button', { class: 'btn prim', onclick: intentar(async () => { await api('PUT', '/api/config', c); S.configCargada = false; toast('Marca guardada'); render(); }) }, 'Guardar'),
           c.logo ? h('button', { class: 'btn', onclick: () => { c.logo = ''; prev.replaceChildren(h('span', { class: 'sub' }, 'Sin logo')); } }, 'Quitar logo') : null)),
       h('div', { class: 'lista' }, formPassword(), h('button', { class: 'btn peligro', onclick: () => salir() }, 'Cerrar sesión'))));
 }
