@@ -1,0 +1,15 @@
+{
+  "name": "app-entrenamiento",
+  "version": "2.0.0",
+  "description": "App web entrenador / alumno con login por CI (Netlify + Supabase)",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "crear-entrenador": "node scripts/crear-entrenador.js"
+  },
+  "dependencies": {
+    "postgres": "3.4.5"
+  }
+}

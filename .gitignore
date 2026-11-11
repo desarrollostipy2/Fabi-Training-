@@ -1,0 +1,10 @@
+node_modules/
+.env
+.netlify/
+datos.db
+datos.db-*
+*.log
+
+.env.txt
+.env.*
+!.env.example
