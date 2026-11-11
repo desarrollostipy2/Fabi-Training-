@@ -109,7 +109,7 @@ function vistaLogin() {
   h('p', { class: 'sub', style: 'text-align:center;margin:14px 0 0' }, 'Alumnos: tu primera contraseña es tu número de CI.'));
   $app.replaceChildren(h('div', { class: 'login' }, h('div', { class: 'card' },
     h('div', { class: 'marca', style: 'margin-bottom:14px' }, h('img', { src: '/icono.svg', alt: '' })),
-    h('h1', {}, 'Bienvenido'), h('p', { class: 'sub', style: 'margin:0 0 18px' }, 'Ingresá con tu CI'), form)));
+    h('h1', {}, 'Fabi-Training'), h('p', { class: 'sub', style: 'margin:0 0 18px' }, 'Ingresá con tu CI'), form)));
   ci.focus();
 }
 async function salir(silencioso) {
